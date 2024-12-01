@@ -2,10 +2,6 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import Dict
-import rdkit
-from rdkit import Chem
-from rdkit.Chem import Draw
-from rdkit.Chem import AllChem
 
 class MoleculeVisualizer:
     def __init__(self):
@@ -16,7 +12,7 @@ class MoleculeVisualizer:
         }
 
     def display_results(self, results: Dict):
-        """Display the optimization results and molecular visualizations."""
+        """Display the optimization results and visualizations."""
         st.header("Nanobot Design Results")
 
         # Display molecular properties
@@ -25,8 +21,8 @@ class MoleculeVisualizer:
         # Display quantum state visualization
         self._display_quantum_state(results['state_vector'])
         
-        # Display molecular structure
-        self._display_molecular_structure(results)
+        # Display optimization scores
+        self._display_optimization_scores(results)
         
         # Display task-specific results
         self._display_task_specific_results(results)
@@ -83,34 +79,31 @@ class MoleculeVisualizer:
         st.pyplot(fig)
         plt.close()
 
-    def _display_molecular_structure(self, results: Dict):
-        """Display the molecular structure using RDKit."""
-        st.subheader("Predicted Molecular Structure")
+    def _display_optimization_scores(self, results: Dict):
+        """Display optimization scores and configuration details."""
+        st.subheader("Optimization Results")
         
-        # Generate a sample molecule based on the properties
-        # This is a simplified example - in a real application, 
-        # you would generate the actual molecular structure based on the quantum simulation
-        mol = self._generate_sample_molecule(results['molecular_properties'])
+        # Display overall optimization score
+        st.metric(
+            "Overall Optimization Score",
+            f"{results['optimization_score']:.3f}",
+            delta=None
+        )
         
-        if mol is not None:
-            # Generate 2D coordinates for the molecule
-            AllChem.Compute2DCoords(mol)
+        # Display optimized configuration details
+        st.markdown("### Optimized Configuration")
+        config = results['optimized_configuration']
+        
+        # Create two columns for configuration details
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.metric("Size (nm)", f"{config['size']*1e9:.1f}")
+            st.metric("Energy Level", f"{config['energy_level']:.3f}")
             
-            # Convert the molecule to an image
-            img = Draw.MolToImage(mol)
-            
-            # Display the image
-            st.image(img, caption="Predicted Molecular Structure", use_column_width=True)
-
-    def _generate_sample_molecule(self, properties: Dict) -> rdkit.Chem.Mol:
-        """Generate a sample molecule based on the properties.
-        This is a simplified example - in a real application, 
-        you would generate the actual molecular structure based on the quantum simulation."""
-        # Create a simple molecule as an example
-        # In a real application, this would be based on the quantum simulation results
-        smiles = "CC(=O)OC1=CC=CC=C1C(=O)O"  # Example SMILES string
-        mol = Chem.MolFromSmiles(smiles)
-        return mol
+        with col2:
+            st.metric("Stability", f"{config['stability_index']:.3f}")
+            st.metric("Coherence", f"{config['coherence_measure']:.3f}")
 
     def _display_task_specific_results(self, results: Dict):
         """Display task-specific analysis results."""
@@ -136,9 +129,9 @@ class MoleculeVisualizer:
         
         # Create a radar chart for medical properties
         self._create_radar_chart({
-            'Biocompatibility': results['biocompatibility_score'],
-            'Targeting': results['molecular_properties']['stability_index'],
-            'Drug Delivery': results['molecular_properties']['coherence_measure']
+            'Biocompatibility': results['optimized_configuration']['biocompatibility_index'],
+            'Targeting': results['optimized_configuration']['targeting_efficiency'],
+            'Payload': results['optimized_configuration']['payload_capacity']
         }, 'Medical Properties')
 
     def _display_environmental_results(self, results: Dict):
